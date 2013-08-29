@@ -1,0 +1,13 @@
+name:                truth
+version:             0.1
+description:         Truth Table Automator
+license:             BSD3
+license-file:        LICENSE
+author:              Devin Nusbaum
+maintainer:          d.w.nusbaum@gmail.com
+build-Type:          Simple
+cabal-Version:       >=1.2
+
+executable truth
+  Main-is:           Truth.hs
+  Build-Depends:     base >= 3, containers, parsec, transformers

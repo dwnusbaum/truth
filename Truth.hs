@@ -3,6 +3,7 @@ import Control.Monad (liftM, liftM2, liftM3)
 import Data.Functor.Identity(Identity)
 import Data.List
 import Data.Maybe
+import System.Environment (getArgs)
 import Text.Parsec hiding (parse)
 import Text.Parsec.Expr
 import Text.Parsec.Language(emptyDef)
@@ -105,7 +106,11 @@ opTable = [ [ Infix  (reservedOp "<->" >> return Iff) AssocLeft
             ]
           ]
 
-main = case parse "A;B;C;D;(A<->B)<->(~D&B)" of
-    Left err -> print err
-    Right val -> mapM_ (\(x,y) -> putStrLn (concatMap pprint x ++ "|" ++ concatMap pprint y )) $ uncurry eval vars
-      where vars = first (map getVar) $ span isVar val
+--Nomanisan 11
+main = getArgs >>= \args -> case args of
+    [] -> putStrLn "No rules specified"
+    [x] -> case parse x of
+        Left err -> print err
+        Right val -> mapM_ (\(x,y) -> putStrLn (init (concatMap ((++ ",") . pprint) x) ++ "|" ++ init (concatMap ((++ ",") . pprint) y ))) $ uncurry eval vars
+          where vars = first (map getVar) $ span isVar val
+    _ -> putStrLn "Invalid command line arguments"
