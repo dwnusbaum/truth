@@ -114,7 +114,6 @@ opTable = [ [ Infix  (reservedOp "<->" >> return Iff) AssocLeft
             ]
           ]
 
---Nomanisan 11
 main = getArgs >>= \args -> case args of
     [] -> putStrLn "No rules specified"
     [x] -> case parse x of
