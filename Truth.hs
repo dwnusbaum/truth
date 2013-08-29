@@ -17,6 +17,7 @@ data Sym
    = Var String
    | And Sym Sym
    | Or  Sym Sym
+   | Xor Sym Sym
    | Iff Sym Sym
    | Imp Sym Sym
    | Neg Sym
@@ -51,9 +52,15 @@ evalRow vars = map eval'
   where eval' (Var   v) = unsafeLookup v vars
         eval' (And a b) = eval' a && eval' b
         eval' (Or  a b) = eval' a || eval' b
+        eval' (Xor a b) = eval' a `xor` eval' b
         eval' (Iff a b) = eval' a == eval' b
         eval' (Imp a b) = if eval' a then eval' b else True
         eval' (Neg   a) = not $ eval' a
+
+xor :: Bool -> Bool -> Bool
+xor True False = True
+xor False True = True
+xor _ _ = False
 
 unsafeLookup :: Eq a => a -> [(a, b)] -> b
 unsafeLookup = (fromJust .) . lookup
@@ -85,7 +92,7 @@ style = emptyDef
     , T.identLetter     = alphaNum <|> oneOf "_'"
     , T.opStart         = T.opLetter style
     , T.opLetter        = oneOf ""
-    , T.reservedOpNames = [ "&", "|", "<->", "->", "~", ";" ]
+    , T.reservedOpNames = [ "&", "|", "^", "<->", "->", "~", ";" ]
     , T.reservedNames   = []
     , T.caseSensitive   = True
     }
@@ -100,7 +107,8 @@ opTable :: [[Operator String () Identity Sym]]
 opTable = [ [ Infix  (reservedOp "<->" >> return Iff) AssocLeft
             , Infix  (reservedOp "->" >> return Imp) AssocLeft
             ]
-          , [ Infix  (reservedOp "&" >> return And) AssocLeft
+          , [ Infix  (reservedOp "^" >> return Xor) AssocLeft
+            , Infix  (reservedOp "&" >> return And) AssocLeft
             , Infix  (reservedOp "|" >> return Or) AssocLeft
             , Prefix (reservedOp "~" >> return Neg)
             ]
