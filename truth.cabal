@@ -9,5 +9,5 @@ build-Type:          Simple
 cabal-Version:       >=1.2
 
 executable truth
-  Main-is:           Truth.hs
+  Main-is:           Main.hs
   Build-Depends:     base >= 3, containers, parsec, transformers
