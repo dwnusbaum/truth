@@ -13,7 +13,10 @@ import Parse
 parseAndEval :: String -> String -> IO ()
 parseAndEval input filename = case parse input of
     Left err -> print err
-    Right rules -> putStrLn (showResults (filter (\(_,y) -> all (==True) y) evaled)) >> writeFile filename (csv rules evaled) >> putStrLn ("Truth table written to " ++ filename)
+    Right rules -> do
+        putStrLn $ showResults $ filter (all id . snd) evaled
+        writeFile filename (csv rules evaled)
+        putStrLn $ "Truth table written to " ++ filename
       where evaled = uncurry eval $ varSplit rules
 
 showResults :: [([(String,Bool)],[Bool])] -> String
