@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 
 module Parse
-    ( parse
+    ( parseRules
+    , parseVars
     ) where
 
 import Control.Monad (liftM)
@@ -15,14 +16,17 @@ import Truth
 
 type Parser = Parsec String ()
 
-parse :: String -> Either ParseError [Term]
-parse = runParser (expr `sepBy1` char ';') () "Truth"
+parseRules :: String -> Either ParseError [Rule]
+parseRules = runParser (expr `sepBy` char ',') () "Rules"
 
-expr :: Parser Term
+parseVars :: String -> Either ParseError [String]
+parseVars = runParser (identifier `sepBy1` char ',') () "Vars"
+
+expr :: Parser Rule
 expr = buildExpressionParser opTable term
 
-term :: Parser Term
-term =  liftM Var (many1 letter)
+term :: Parser Rule
+term =  liftM Var identifier
     <|> parens expr
 
 lexer :: T.TokenParser ()
@@ -43,19 +47,22 @@ style = emptyDef
     , T.caseSensitive   = True
     }
 
+identifier :: Parser String
+identifier = T.identifier lexer
+
 parens :: Parser a -> Parser a
 parens = T.parens lexer
 
 reservedOp :: String -> Parser ()
 reservedOp = T.reservedOp lexer
 
-opTable :: [[Operator String () Identity Term]]
-opTable = [ [ Infix  (reservedOp "<->" >> return Iff) AssocLeft
+opTable :: [[Operator String () Identity Rule]]
+opTable = [ [ Prefix (reservedOp "~" >> return Not) ]
+          , [ Infix  (reservedOp "<->" >> return Iff) AssocLeft
             , Infix  (reservedOp "->" >> return Imp) AssocLeft
             ]
           , [ Infix  (reservedOp "^" >> return Xor) AssocLeft
             , Infix  (reservedOp "&" >> return And) AssocLeft
             , Infix  (reservedOp "|" >> return Or) AssocLeft
-            , Prefix (reservedOp "~" >> return Not)
             ]
           ]

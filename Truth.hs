@@ -1,25 +1,24 @@
 {-# OPTIONS_GHC -Wall #-}
 
 module Truth
-    ( Term(..)
-    , varSplit
+    ( Rule(..)
     , eval
     ) where
 
 import Data.List
 import Data.Maybe
 
-data Term
+data Rule
    = Var String
-   | And Term Term
-   | Or  Term Term
-   | Xor Term Term
-   | Iff Term Term
-   | Imp Term Term
-   | Not Term
+   | And Rule Rule
+   | Or  Rule Rule
+   | Xor Rule Rule
+   | Iff Rule Rule
+   | Imp Rule Rule
+   | Not Rule
    deriving (Eq)
 
-instance Show (Term) where
+instance Show (Rule) where
     showsPrec _ (Var   v) = showString v
     showsPrec p (And a b) = showParen (p>0) $ showsPrec p a . showChar '&' . showsPrec (p+1) b
     showsPrec p (Or  a b) = showParen (p>0) $ showsPrec p a . showChar '|' . showsPrec (p+1) b
@@ -28,14 +27,9 @@ instance Show (Term) where
     showsPrec p (Imp a b) = showParen (p>0) $ showsPrec p a . showString "->" . showsPrec (p+1) b
     showsPrec p (Not   t) = showChar '~' . showsPrec (p+1) t
 
-varSplit :: [Term] -> ([String],[Term])
-varSplit [] = ([],[])
-varSplit (Var v : ts) = let (s, t) = varSplit ts in (v : s, t)
-varSplit (    t : ts) = ([] , t : ts)
-
 --Evaluator
 
-eval :: [String] -> [Term] -> [([(String,Bool)],[Bool])]
+eval :: [String] -> [Rule] -> [([(String,Bool)],[Bool])]
 eval vars rules = map (`evalRow` rules) env
   where truthValues = makeCases $ length vars
         env = map (zip vars) truthValues
@@ -49,9 +43,9 @@ makeCases n
         cases 1 = [ concat (replicate half [True, False]) ]
         cases i = concat (replicate (2^(n-i)) (replicate (2^(i-1)) True ++ replicate (2^(i-1)) False)) : cases (i - 1)
 
-evalRow :: [(String, Bool)] -> [Term] -> ([(String,Bool)],[Bool])
+evalRow :: [(String, Bool)] -> [Rule] -> ([(String,Bool)],[Bool])
 evalRow vars rules = (vars, map eval' rules)
-  where eval' (Var   v) = unsafeLookup v vars
+  where eval' (Var   v) = fromJust . lookup v $ vars
         eval' (And a b) = eval' a && eval' b
         eval' (Or  a b) = eval' a || eval' b
         eval' (Xor a b) = eval' a `xor` eval' b
@@ -63,7 +57,3 @@ xor :: Bool -> Bool -> Bool
 xor True False = True
 xor False True = True
 xor _ _ = False
-
-unsafeLookup :: Eq a => a -> [(a, b)] -> b
-unsafeLookup = (fromJust .) . lookup
-
