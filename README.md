@@ -9,6 +9,6 @@ If you do not already have Haskell on your machine, you can download the Haskell
 
 Example Usage
 -------------
-`truth "A;B;C;A->B;~C" truthtable.csv`
+`truth "A,B,C" "A->B,~C"`
 
-The above command will create a truth table with variables A,B, and C and will test the rules A -> B and ~C. The program will display the values that satisfy all of the rules, and will store the truth table in the file truthtable.csv. If no filename is specified it defaults to truth.csv. 
+The above command will create a truth table with variables A,B, and C and will test the rules A -> B and ~C. The program will output both the values that satisfy all of the rules and the full truth table to stdout.
