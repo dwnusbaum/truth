@@ -1,15 +1,18 @@
 {-# OPTIONS_GHC -Wall #-}
 
 module Truth
-    ( Rule(..)
-    , eval
+    ( Sym
+    , Rule(..)
+    , Env
+    , truthTable
     ) where
 
-import Data.List
 import Data.Maybe
 
+type Sym = String
+
 data Rule
-   = Var String
+   = Var Sym
    | And Rule Rule
    | Or  Rule Rule
    | Xor Rule Rule
@@ -17,6 +20,8 @@ data Rule
    | Imp Rule Rule
    | Not Rule
    deriving (Eq)
+
+type Env = [(Sym, Bool)]
 
 instance Show (Rule) where
     showsPrec _ (Var   v) = showString v
@@ -29,23 +34,16 @@ instance Show (Rule) where
 
 --Evaluator
 
-eval :: [String] -> [Rule] -> [([(String,Bool)],[Bool])]
-eval vars rules = map (`evalRow` rules) env
-  where truthValues = makeCases $ length vars
-        env = map (zip vars) truthValues
+truthTable :: [Sym] -> [Rule] -> [(Env, [Bool])]
+truthTable vars rules = map (`evalRow` rules) $ getEnvs [] vars
 
-makeCases :: Int -> [[Bool]]
-makeCases n
-  | n < 1 = error "There was less than 1 variable found"
-  | n == 1 = [ [ True ], [ False ] ]
-  | otherwise = transpose $ (replicate half True ++ replicate half False) : cases (n-1)
-  where half = (2 ^ n) `div` 2
-        cases 1 = [ concat (replicate half [True, False]) ]
-        cases i = concat (replicate (2^(n-i)) (replicate (2^(i-1)) True ++ replicate (2^(i-1)) False)) : cases (i - 1)
+getEnvs :: [(Sym, Bool)] -> [Sym] -> [Env]
+getEnvs xs []     = [xs]
+getEnvs xs (y:ys) = getEnvs ((y, True) : xs) ys ++ getEnvs ((y, False) : xs) ys
 
-evalRow :: [(String, Bool)] -> [Rule] -> ([(String,Bool)],[Bool])
-evalRow vars rules = (vars, map eval' rules)
-  where eval' (Var   v) = fromJust . lookup v $ vars
+evalRow :: Env -> [Rule] -> (Env, [Bool])
+evalRow env rules = (env, map eval' rules)
+  where eval' (Var   v) = fromJust . lookup v $ env
         eval' (And a b) = eval' a && eval' b
         eval' (Or  a b) = eval' a || eval' b
         eval' (Xor a b) = eval' a `xor` eval' b
@@ -54,6 +52,6 @@ evalRow vars rules = (vars, map eval' rules)
         eval' (Not   a) = not $ eval' a
 
 xor :: Bool -> Bool -> Bool
-xor True False = True
-xor False True = True
-xor _ _ = False
+xor True  False = True
+xor False True  = True
+xor _     _     = False

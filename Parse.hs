@@ -19,7 +19,7 @@ type Parser = Parsec String ()
 parseRules :: String -> Either ParseError [Rule]
 parseRules = runParser (expr `sepBy` char ',') () "Rules"
 
-parseVars :: String -> Either ParseError [String]
+parseVars :: String -> Either ParseError [Sym]
 parseVars = runParser (identifier `sepBy1` char ',') () "Vars"
 
 expr :: Parser Rule
